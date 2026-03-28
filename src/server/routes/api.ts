@@ -1,93 +1,134 @@
 import { Hono } from 'hono';
-import { context, redis, reddit } from '@devvit/web/server';
-import type {
-  DecrementResponse,
-  IncrementResponse,
-  InitResponse,
-} from '../../shared/api';
+import { context, reddit } from '@devvit/web/server';
+import { isUserVerifiedToPost } from '../helpers';
+import type { InitResponse, QuizSubmissionResponse } from '../../shared/api';
+import type { Form, UiResponse } from '@devvit/web/shared';
 
 type ErrorResponse = {
   status: 'error';
   message: string;
 };
 
+type QuizFormResponse = {
+  action: 'SUBMITTED';
+  values: { [K in keyof typeof quizAnswers]: string[]; };
+}
+
+type QuizKey = keyof typeof quizAnswers;
+
 export const api = new Hono();
 
-api.get('/init', async (c) => {
-  const { postId } = context;
+const quizAnswers = {
+  deltaT: 'temperature_difference',
+  normalSuction: 'it_depends',
+  whatIsABC: 'airflow_before_charge',
+}
 
-  if (!postId) {
-    console.error('API Init Error: postId not found in devvit context');
+const quizFields: Form['fields'] = [
+  {
+    type: 'select',
+    name: 'deltaT',
+    label: 'What does ΔT stand for?',
+    options: [
+      { label: 'Total system pressure', value: 'system_pressure' },
+      { label: 'Temperature difference between two points', value: 'temperature_difference' }, // Answer
+      { label: 'Refrigerant saturation temperature', value: 'saturation_temperature' },
+      { label: 'Thermostat setpoint range', value: 'thermostat_setpoint' }
+    ]
+  },
+  {
+    type: 'select',
+    name: 'normalSuction',
+    label: 'What is "normal" suction pressure fro an A/C system?',
+    options: [
+      { label: '69 psi', value: '69_psi' },
+      { label: '120 psi', value: '120_psi' },
+      { label: '45 psi', value: '45_psi' },
+      { label: 'It depends on the system and conditions', value: 'it_depends' } // Answer
+    ]
+  },
+  {
+    type: 'select',
+    name: 'whatIsABC',
+    label: 'What does ABC stand for in HVAC?',
+    options: [
+      { label: 'Airflow Before Charge', value: 'airflow_before_charge' }, // Answer
+      { label: 'Air Balance Commissioning', value: 'air_balance_commissioning' },
+      { label: 'Advanced Blower Calibration', value: 'advanced_blower_calibration' },
+      { label: 'Ambient Bypass Correction', value: 'ambient_bypass_correction' }
+    ]
+  },
+]
+
+api.get('/init', async (c) => {
+  const { subredditName } = context;
+
+  if (!subredditName) {
+    console.error('API Init Error: subredditName not found in devvit context');
     return c.json<ErrorResponse>(
       {
         status: 'error',
-        message: 'postId is required but missing from context',
+        message: 'subredditName is required but missing from context',
+      },
+      400
+    );
+  }
+
+  const username = await reddit.getCurrentUsername();
+  if (!username) {
+    return c.json<ErrorResponse>(
+      {
+        status: 'error',
+        message: 'Only logged in users may take part in this quiz',
       },
       400
     );
   }
 
   try {
-    const [count, username] = await Promise.all([
-      redis.get('count'),
-      reddit.getCurrentUsername(),
-    ]);
-
     return c.json<InitResponse>({
       type: 'init',
-      postId: postId,
-      count: count ? parseInt(count) : 0,
-      username: username ?? 'anonymous',
+      subredditName: subredditName,
+      username: username,
+      isVerified: await isUserVerifiedToPost(subredditName, username),
+      quizForm: {
+        title: 'Verification Quiz',
+        description: 'Since this subreddit is for trade professionals only you must verify your account by taking a short quiz!',
+        fields: quizFields,
+        acceptLabel: 'Submit',
+        cancelLabel: 'Nevermind'
+      }
     });
-  } catch (error) {
-    console.error(`API Init Error for post ${postId}:`, error);
+  } 
+  catch (error) {
+    console.error(`API Init Error for subreddit ${subredditName}:`, error);
+
     let errorMessage = 'Unknown error during initialization';
     if (error instanceof Error) {
       errorMessage = `Initialization failed: ${error.message}`;
     }
+
     return c.json<ErrorResponse>(
       { status: 'error', message: errorMessage },
       400
     );
   }
-});
+})
 
-api.post('/increment', async (c) => {
-  const { postId } = context;
-  if (!postId) {
-    return c.json<ErrorResponse>(
-      {
-        status: 'error',
-        message: 'postId is required',
-      },
-      400
-    );
-  }
+api.post('/submit-quiz', async (c) => {
+  const quizUserAnswers: QuizFormResponse['values'] = (await c.req.json()).values;
+  if (!quizUserAnswers) return;
 
-  const count = await redis.incrBy('count', 1);
-  return c.json<IncrementResponse>({
-    count,
-    postId,
-    type: 'increment',
-  });
-});
+  let failedQuiz = false;
+  (Object.entries(quizUserAnswers) as [QuizKey, string[]][])
+    .forEach(([key, userAnswer]) => {
+      if (quizAnswers[key] !== userAnswer[0]) {
+        failedQuiz = true;
+      }
+    });
 
-api.post('/decrement', async (c) => {
-  const { postId } = context;
-  if (!postId) {
-    return c.json<ErrorResponse>(
-      {
-        status: 'error',
-        message: 'postId is required',
-      },
-      400
-    );
-  }
-
-  const count = await redis.incrBy('count', -1);
-  return c.json<DecrementResponse>({
-    count,
-    postId,
-    type: 'decrement',
-  });
-});
+  return c.json<QuizSubmissionResponse>({
+    type: 'quizSubmission',
+    didUserFail: failedQuiz
+  })
+})

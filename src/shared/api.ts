@@ -1,18 +1,18 @@
+import { Form } from "@devvit/web/shared";
+
 export type InitResponse = {
   type: 'init';
-  postId: string;
-  count: number;
+
+  subredditName: string;
   username: string;
+
+  isVerified: boolean;
+
+  quizForm?: Form
 };
 
-export type IncrementResponse = {
-  type: 'increment';
-  postId: string;
-  count: number;
-};
+export type QuizSubmissionResponse = {
+  type: 'quizSubmission';
 
-export type DecrementResponse = {
-  type: 'decrement';
-  postId: string;
-  count: number;
-};
+  didUserFail: boolean;
+}

@@ -11,10 +11,6 @@
         "type": "number",
         "label": "Minimum post karma to override verification, set to 0 to disable.",
         "defaultValue": 100
-      },
-      "verifiedRemovalMessage": {
-        "type": "string",
-        "label": "What to comment when removing an unverified post."
       }
     }
   },
@@ -25,9 +21,6 @@
         "inline": true,
         "height": "regular",
         "entry": "splash.html"
-      },
-      "quiz": {
-        "entry": "quiz.html"
       }
     }
   },
@@ -43,18 +36,8 @@
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/post-create"
-      },
-      {
-        "label": "Example form",
-        "description": "Show a simple form",
-        "location": "subreddit",
-        "forUserType": "moderator",
-        "endpoint": "/internal/menu/example-form"
       }
     ]
-  },
-  "forms": {
-    "exampleForm": "/internal/form/example-submit"
   },
   "triggers": {
     "onAppInstall": "/internal/triggers/on-app-install",
@@ -63,5 +46,8 @@
   "scripts": {
     "dev": "vite build --watch",
     "build": "vite build"
+  },
+  "dev": {
+    "subreddit": "hvacbot_dev"
   }
 }

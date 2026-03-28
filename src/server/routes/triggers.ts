@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import type { OnAppInstallRequest, OnPostSubmitRequest, TriggerResponse } from '@devvit/web/shared';
 import { context, reddit, settings } from '@devvit/web/server';
 import { createPost } from '../core/post';
-import { isUserApproved, isUserModerator } from '../helpers';
+import { isUserVerifiedToPost } from '../helpers';
 
 export const triggers = new Hono();
 
@@ -35,33 +35,23 @@ triggers.post('/on-post-submit', async (c) => {
   if (!input) return;
 
   if (await settings.get('verifiedEnabled')) {
-    console.log('run');
-    await removeUnapprovedPostsSubreddit(input);
+    await removeUnverifiedPostsSubreddit(input);
   }
 
   return c.json<TriggerResponse>({
-      status: 'success',
-      message: 'hi'
+      status: 'success'
     },
     200
   );
 });
 
-async function removeUnapprovedPostsSubreddit(input: OnPostSubmitRequest): Promise<void> {
+async function removeUnverifiedPostsSubreddit(input: OnPostSubmitRequest): Promise<void> {
   const subredditName = input.subreddit?.name;
   const username = input.author?.name;
   if (!subredditName || !username) return;
   
   // Get user's post karma for bypass if configured
-  const userSubredditPostKarma = (await reddit.getUserKarmaFromCurrentSubreddit(username)).fromPosts;
-
-  const userIsApproved = false //await isUserApproved(subredditName, username);
-  const userIsModerator = false // await isUserModerator(subredditName, username);
-  if (userIsApproved || userIsModerator) return;
-
-  const subredditPostKarmaConfig = await settings.get('verifiedKarma') as number;
-  if (subredditPostKarmaConfig <= Number(userSubredditPostKarma)) return;
-  console.log('continue for removal')
+  if (!isUserVerifiedToPost(subredditName, username)) return;
 
   const postId = input.post?.id as `t3_${string}`;
   const post = await reddit.getPostById(postId);
