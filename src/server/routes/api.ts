@@ -5,7 +5,7 @@ import type { InitResponse, QuizResponse, QuizSubmissionResponse } from '../../s
 import type { Form } from '@devvit/web/shared';
 
 type ErrorResponse = {
-  status: 'error';
+  status: 'error' | 'logged_out';
   message: string;
 };
 
@@ -78,7 +78,7 @@ api.get('/init', async (c) => {
   if (!username) {
     return c.json<ErrorResponse>(
       {
-        status: 'error',
+        status: 'logged_out',
         message: 'Only logged in users may take part in this quiz',
       },
       400
@@ -113,7 +113,7 @@ api.get('/get-quiz', async (c) => {
   if (!username) {
     return c.json<ErrorResponse>(
       {
-        status: 'error',
+        status: 'logged_out',
         message: 'Only logged in users may take part in this quiz',
       },
       400
