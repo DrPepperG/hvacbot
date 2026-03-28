@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { context, reddit } from '@devvit/web/server';
 import { isUserVerifiedToPost } from '../helpers';
-import type { InitResponse, QuizSubmissionResponse } from '../../shared/api';
-import type { Form, UiResponse } from '@devvit/web/shared';
+import type { InitResponse, QuizResponse, QuizSubmissionResponse } from '../../shared/api';
+import type { Form } from '@devvit/web/shared';
 
 type ErrorResponse = {
   status: 'error';
@@ -85,12 +85,46 @@ api.get('/init', async (c) => {
     );
   }
 
-  try {
-    return c.json<InitResponse>({
+  const isVerified = await isUserVerifiedToPost(subredditName, username);
+
+  return c.json<InitResponse>(
+    {
       type: 'init',
+      isVerified: isVerified
+    }
+  );
+})
+
+api.get('/get-quiz', async (c) => {
+  const { subredditName } = context;
+
+  if (!subredditName) {
+    console.error('API Init Error: subredditName not found in devvit context');
+    return c.json<ErrorResponse>(
+      {
+        status: 'error',
+        message: 'subredditName is required but missing from context',
+      },
+      400
+    );
+  }
+
+  const username = await reddit.getCurrentUsername();
+  if (!username) {
+    return c.json<ErrorResponse>(
+      {
+        status: 'error',
+        message: 'Only logged in users may take part in this quiz',
+      },
+      400
+    );
+  }
+
+  try {
+    return c.json<QuizResponse>({
+      type: 'quizResponse',
       subredditName: subredditName,
       username: username,
-      isVerified: await isUserVerifiedToPost(subredditName, username),
       quizForm: {
         title: 'Verification Quiz',
         description: 'Since this subreddit is for trade professionals only you must verify your account by taking a short quiz!',
