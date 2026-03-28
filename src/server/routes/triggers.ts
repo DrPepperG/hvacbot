@@ -57,6 +57,7 @@ async function removeUnverifiedPostsSubreddit(input: OnPostSubmitRequest): Promi
   const post = await reddit.getPostById(postId);
   if (!postId || !post) return;
 
+  const subredditPostKarmaConfig = await settings.get('verifiedKarma') as number;
   const removalReason = 
   `
   Hello,

@@ -89,7 +89,7 @@ export const Splash = () => {
   }
 
   return (
-    <div className="flex relative flex-col justify-center items-center min-h-screen gap-4 bg-white dark:bg-stone-900">
+    <div className="flex flex-col justify-center items-center min-h-screen gap-4 bg-white dark:bg-stone-900">
       {isLoading 
         ? <>
             <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
@@ -106,7 +106,7 @@ export const Splash = () => {
               </>
             :
               <>
-                <div className="flex flex-col items-center gap-2">
+                <div className="mt-10 flex flex-col items-center gap-2">
                   <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
                     Hey {context.username ?? 'user'} 👋
                   </h1>
@@ -125,7 +125,7 @@ export const Splash = () => {
                     Tap to Start
                   </button>
                 </div>
-                <footer className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 flex-col text-center text-[0.8em] text-gray-600 dark:text-gray-400">
+                <footer className="flex gap-3 flex-col text-center text-[0.8em] text-gray-600 dark:text-gray-400">
                   <p className="text-orange-500 font-bold">
                     r/HVAC is for professionals only
                   </p>
