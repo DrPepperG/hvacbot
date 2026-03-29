@@ -51,7 +51,7 @@ async function removeUnverifiedPostsSubreddit(input: OnPostSubmitRequest): Promi
   if (!subredditName || !username) return;
   
   // Get user's post karma for bypass if configured
-  if (!isUserVerifiedToPost(subredditName, username)) return;
+  if (await isUserVerifiedToPost(subredditName, username)) return;
 
   const postId = input.post?.id as `t3_${string}`;
   const post = await reddit.getPostById(postId);
