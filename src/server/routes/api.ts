@@ -152,6 +152,10 @@ api.get('/get-quiz', async (c) => {
 api.post('/submit-quiz', async (c) => {
   const quizUserAnswers: QuizFormResponse['values'] = (await c.req.json()).values;
   if (!quizUserAnswers) return;
+  
+  const { subredditName } = context;
+  const username = await reddit.getCurrentUsername();
+  if (!subredditName || !username) return;
 
   let failedQuiz = false;
   (Object.entries(quizUserAnswers) as [QuizKey, string[]][])
@@ -160,6 +164,10 @@ api.post('/submit-quiz', async (c) => {
         failedQuiz = true;
       }
     });
+
+  if (!failedQuiz) {
+    await reddit.approveUser(username, subredditName)
+  }
 
   return c.json<QuizSubmissionResponse>({
     type: 'quizSubmission',
