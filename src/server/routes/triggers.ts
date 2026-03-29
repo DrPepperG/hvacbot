@@ -62,12 +62,12 @@ async function removeUnverifiedPostsSubreddit(input: OnPostSubmitRequest): Promi
   `
   Hello,
 
-  r/${subredditName} has the following requirements before you can post in this subreddit:
-  * Pass an approval quiz ${subredditPostKarmaConfig > 0 
-    ? 'or have subreddit post karma at or above **'+ subredditPostKarmaConfig +'**' 
-    : ''}
+  You need to meet one of the following requirements before posting on r/${subredditName}:
+  * Pass an approval quiz
+  * Be an approved user
+  ${subredditPostKarmaConfig > 0 ? `* Have ${subredditPostKarmaConfig}+ community post karma (For grandfathered accounts)` : ''}
 
-  Once you reach these requirements you may repost this post.
+  Once atleast one requirement is met you may repost your post!
 
   Thank you,
   r/${subredditName} moderation team
