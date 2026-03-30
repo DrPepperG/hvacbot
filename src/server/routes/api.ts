@@ -136,7 +136,7 @@ api.get('/get-quiz', async (c) => {
       username: username,
       quizForm: {
         title: 'Verification Quiz',
-        description: 'Since this subreddit is for trade professionals only you must verify your account by taking a short quiz!',
+        description: 'Since this subreddit is for trade professionals only, you must verify your account by taking a short quiz!',
         fields: quizFields,
         acceptLabel: 'Submit',
         cancelLabel: 'Nevermind'
