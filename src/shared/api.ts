@@ -2,7 +2,7 @@ import { Form } from "@devvit/web/shared";
 
 export type InitResponse = {
   type: 'init';
-  isVerified: boolean;
+  accountStatus: 'VERIFIED' | 'LOGGED_IN' | 'LOGGED_OUT' | 'BANNED'
 };
 
 export type QuizResponse = {

@@ -18,6 +18,15 @@ export async function isUserApproved(subredditName: string, username: string) {
     return isApproved;
 }
 
+export async function isUserBanned(subredditName: string, username: string) {
+    const isBanned = (await reddit.getBannedUsers({
+        subredditName: subredditName,
+        username: username
+    }).all()).length > 0
+
+    return isBanned;
+}
+
 export async function isUserVerifiedToPost(subredditName: string, username: string) {
     const userSubredditPostKarma = (await reddit.getUserKarmaFromCurrentSubreddit(username)).fromPosts;
 

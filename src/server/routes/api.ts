@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { context, reddit } from '@devvit/web/server';
-import { isUserVerifiedToPost } from '../helpers';
+import { isUserBanned, isUserVerifiedToPost } from '../helpers';
 import type { InitResponse, QuizResponse, QuizSubmissionResponse } from '../../shared/api';
 import type { Form } from '@devvit/web/shared';
 
@@ -76,23 +76,32 @@ api.get('/init', async (c) => {
 
   const username = await reddit.getCurrentUsername();
   if (!username) {
-    return c.json<ErrorResponse>(
-      {
-        status: 'logged_out',
-        message: 'Only logged in users may take part in this quiz',
-      },
-      400
-    );
+    return c.json<InitResponse>({
+      type: 'init',
+      accountStatus: 'LOGGED_OUT'
+    })
+  }
+
+  const isBanned = await isUserBanned(subredditName, username);
+  if (isBanned) {
+    return c.json<InitResponse>({
+      type: 'init',
+      accountStatus: 'BANNED'
+    })
   }
 
   const isVerified = await isUserVerifiedToPost(subredditName, username);
-
-  return c.json<InitResponse>(
-    {
+  if (!isVerified) {
+    return c.json<InitResponse>({
       type: 'init',
-      isVerified: isVerified
-    }
-  );
+      accountStatus: 'LOGGED_IN'
+    });
+  }
+
+  return c.json<InitResponse>({
+    type: 'init',
+    accountStatus: 'VERIFIED'
+  });
 })
 
 api.get('/get-quiz', async (c) => {

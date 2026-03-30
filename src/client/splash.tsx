@@ -47,28 +47,19 @@ async function showQuizForm() {
 }
 
 export const Splash = () => {
-  const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoggedOut, setIsLoggedOut] = useState(false);
+  const [accountStatus, setAccountStatus] = useState('LOGGED_OUT');
 
   useEffect(() => {
     void (async () => {
       await fetch('/api/init')
         .then(async (res) => {
           const json = await res.json();
-          if (!res.ok) {
-            if (json.status === 'logged_out') {
-              setIsLoggedOut(true);
-              throw Error('User not logged in');
-            }
-          }
           return json
         })
         .then(async (json: InitResponse) => {
-          setIsVerified(json.isVerified);
-          quizData = await getQuiz();
-
-          if (!json.isVerified) quizData = await getQuiz();
+          setAccountStatus(json.accountStatus);
+          if (json.accountStatus === 'LOGGED_IN') quizData = await getQuiz();
 
           setIsLoading(false);
         })
@@ -78,67 +69,71 @@ export const Splash = () => {
     })();
   }, [])
 
-  if (isLoggedOut) {
+  if (isLoading) {
     return (
       <div className="flex relative flex-col justify-center items-center min-h-screen gap-4 bg-white dark:bg-stone-900">
         <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
-          You must be logged in to verify an account...
+          Loading...
         </h1>
-      </div>
-    )
+      </div>)
+  }
+
+  switch (accountStatus) {
+    case 'LOGGED_OUT': 
+      return (
+        <div className="flex relative flex-col justify-center items-center min-h-screen gap-4 bg-white dark:bg-stone-900">
+          <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
+            You must be logged in to verify an account...
+          </h1>
+        </div>)
+    case 'VERIFIED':
+      return (
+        <div className="flex relative flex-col justify-center items-center min-h-screen gap-4 bg-white dark:bg-stone-900">
+          <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
+            You're verified, happy posting!
+          </h1>
+        </div>)
+    case 'BANNED':
+      return (
+        <div className="flex relative flex-col justify-center items-center min-h-screen gap-4 bg-white dark:bg-stone-900">
+          <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
+            Your account is banned from this subreddit...
+          </h1>
+        </div>)
   }
 
   return (
     <div className="flex flex-col justify-center items-center min-h-screen gap-4 bg-white dark:bg-stone-900">
-      {isLoading 
-        ? <>
-            <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
-              Loading your experience...
-            </h1>
-          </>
-        : (
-          <>
-            {isVerified
-            ? <>
-                <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
-                  You're verified, happy posting!
-                </h1>
-              </>
-            :
-              <>
-                <div className="mt-10 flex flex-col items-center gap-2">
-                  <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
-                    Hey {context.username ?? 'user'} 👋
-                  </h1>
-                  <p className="text-base text-center text-gray-600 dark:text-gray-300">
-                    Take a quick quiz to get your account verified for posting!
-                  </p>
-                </div>
-                <div className="flex items-center justify-center mt-5">
-                  <button
-                    className="flex items-center justify-center bg-[#d93900] dark:bg-orange-600 text-white w-auto h-10 rounded-full cursor-pointer transition-colors px-4 hover:bg-[#c23300] dark:hover:bg-orange-700"
-                    onClick={async () => { 
-                      const isVerified = await showQuizForm();
-                      setIsVerified(isVerified);
-                    }}
-                  >
-                    Tap to Start
-                  </button>
-                </div>
-                <footer className="flex gap-3 flex-col text-center text-[0.8em] text-gray-600 dark:text-gray-400">
-                  <p className="text-orange-500 font-bold">
-                    r/HVAC is for professionals only
-                  </p>
-                  <button 
-                    className="cursor-pointer hover:text-red-400 transition-colors text-red-500 font-bold"
-                    onClick={() => navigateTo('https://reddit.com/r/hvacadvice')}
-                  >
-                    Homeowner questions must be directed to r/HVACAdvice
-                  </button>
-                </footer>
-            </>}
-          </>
-        )}
+      <div className="mt-10 flex flex-col items-center gap-2">
+        <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
+          Hey {context.username ?? 'user'} 👋
+        </h1>
+        <p className="text-base text-center text-gray-600 dark:text-gray-300">
+          Take a quick quiz to get your account verified for posting!
+        </p>
+      </div>
+      <div className="flex items-center justify-center mt-5">
+        <button
+          className="flex items-center justify-center bg-[#d93900] dark:bg-orange-600 text-white w-auto h-10 rounded-full cursor-pointer transition-colors px-4 hover:bg-[#c23300] dark:hover:bg-orange-700"
+          onClick={async () => { 
+            const isVerified = await showQuizForm();
+            if (isVerified) setAccountStatus('VERIFIED')
+          }}
+        >
+          Tap to Start
+        </button>
+      </div>
+      <footer className="flex gap-3 flex-col text-center text-[0.8em] text-gray-600 dark:text-gray-400">
+        <p className="text-orange-500 font-bold">
+          r/HVAC is for professionals only
+        </p>
+        <button 
+          className="cursor-pointer hover:text-red-400 transition-colors text-red-500 font-bold"
+          onClick={() => navigateTo('https://reddit.com/r/hvacadvice')}
+        >
+          Homeowner questions must be directed to r/HVACAdvice
+        </button>
+      </footer>
     </div>
   );
 };
