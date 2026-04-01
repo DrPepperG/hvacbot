@@ -20,7 +20,7 @@ export const api = new Hono();
 
 const quizAnswers = {
   deltaT: 'temperature_difference',
-  normalSuction: 'it_depends',
+  meteringDevice: 'txv_eev',
   whatIsABC: 'airflow_before_charge',
 }
 
@@ -38,13 +38,13 @@ const quizFields: Form['fields'] = [
   },
   {
     type: 'select',
-    name: 'normalSuction',
-    label: 'What is "normal" suction pressure fro an A/C system?',
+    name: 'meteringDevice',
+    label: 'Which device meters refrigerant?',
     options: [
-      { label: '69 psi', value: '69_psi' },
-      { label: '120 psi', value: '120_psi' },
-      { label: '45 psi', value: '45_psi' },
-      { label: 'It depends on the system and conditions', value: 'it_depends' } // Answer
+      { label: 'TXV/EEV', value: 'txv_eev' }, // Answer
+      { label: 'Compressor', value: 'compressor' },
+      { label: 'Filter drier', value: 'filter_drier' },
+      { label: 'Accumulator', value: 'accumulator' }
     ]
   },
   {
@@ -136,7 +136,7 @@ api.get('/get-quiz', async (c) => {
       username: username,
       quizForm: {
         title: 'Verification Quiz',
-        description: 'Since this subreddit is for trade professionals only, you must verify your account by taking a short quiz!',
+        description: 'This subreddit is for trade professionals only, you must verify your account by taking a short quiz!',
         fields: quizFields,
         acceptLabel: 'Submit',
         cancelLabel: 'Nevermind'
