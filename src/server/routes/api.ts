@@ -41,10 +41,10 @@ const quizFields: Form['fields'] = [
     name: 'meteringDevice',
     label: 'Which device meters refrigerant?',
     options: [
-      { label: 'TXV/EEV', value: 'txv_eev' }, // Answer
       { label: 'Compressor', value: 'compressor' },
       { label: 'Filter drier', value: 'filter_drier' },
-      { label: 'Accumulator', value: 'accumulator' }
+      { label: 'Accumulator', value: 'accumulator' },
+      { label: 'TXV/EEV', value: 'txv_eev' } // Answer
     ]
   },
   {
